@@ -1,0 +1,24 @@
+spark-submit \
+     --master yarn \
+     --deploy-mode client \
+     --driver-memory 5g \
+     --executor-memory 2g \
+     --driver-cores 6 \
+     evaluateRecom.py > outputRecom.txt 1>&1 \
+& \
+spark-submit \
+     --master yarn \
+     --deploy-mode client \
+     --driver-memory 5g \
+     --executor-memory 2g \
+     --driver-cores 6 \
+     importItemPropertiesRecom.py > outputRecom.txt 1>&1;
+
+importNormalEventRecom  importItemPropertiesRecom evaluateRecom
+> outputRecom.txt 1>&1
+
+So in spark you have two different components.
+There is the driver and the workers.
+In yarn-cluster mode the driver is running remotely on a data node and the workers are running on separate data nodes.
+In yarn-client mode the driver is on the machine that started the job and the workers are on the data nodes.
+In local mode the driver and workers are on the machine that started the job.

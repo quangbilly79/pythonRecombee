@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+. "$(cd "`dirname "$0"`"; pwd)/common.sh"
+. "$(cd "`dirname "$0"`"; pwd)/harness-env"
+
+# cli args parse :)
+( echo "$*" | grep -sqwi "\-d" ) && detached=yes
+
+# Correct class identifier is required (check with main)!!!
+HARNESS_CLASS=com.actionml.HarnessServer
+
+# Harness options passed to the Java service
+HARNESS_OPTS="\
+-Dlogback.configurationFile=${HARNESS_LOG_CONFIG} \
+-DHARNESS_LOG_PATH=${HARNESS_LOG_PATH} # this is a no-op!
+
+# We should be able to remove the above options to read all from env, better for containers
+# \
+#-Drest-server.host=${HARNESS_HOST} \ # is this needed?
+#-Drest-server.port=${HARNESS_PORT} \ # is this needed? We use a URI here
+#-Dmongo.host=${MONGO_HOST} \ # is this needed?
+#-Dmongo.port=${MONGO_PORT}" # is this needed? We use a URI here
+
+
+if [ ! -f "${HARNESS_HOME}/bin/main" ]; then
+  echo -e "${RED}Main file '${HARNESS_HOME}/bin/main' not found!${NC}"
+  echo -e "${RED}The Harness server must be run after doing \"make dist\"${NC}"
+  exit 1
+fi
+
+
+# Locate harness PID
+pid=$(java_pid $HARNESS_CLASS)
+
+if [ -n "${pid}" ]; then
+  # harness seems to be running
+  echo -e "${RED}Harness server has a pid: ${pid} you must stop Harness before starting.${NC}"
+  exit 1
+else
+  # start
+  if [ -z "${detached}" ]; then
+    echo -e "${CYAN}Starting Harness server in the foreground, to run as a daemon use with \"-d\"${NC}"
+    exec "${HARNESS_HOME}"/bin/main ${HARNESS_OPTS}
+  else
+    # stderr/stdout log when bin/harness used only
+    # below wites continual logs to /tmp eventually filling the disk
+    # HARNESS_CLILOG="${HARNESS_CLILOG:-/tmp/harness.log}"
+    echo -e "${CYAN}Starting Harness server as a daemon${NC}"
+    HARNESS_CLILOG="${HARNESS_CLILOG:-/dev/null}" # these will be written to logs and STDOUT/STDERR so do not need in tmp file also
+    exec "${HARNESS_HOME}"/bin/main ${HARNESS_OPTS} <&- &> "${HARNESS_CLILOG}" &
+  fi
+
+  echo -e "${CYAN}Run \"harness-cli status system\" to get server status information${NC}"
+fi
