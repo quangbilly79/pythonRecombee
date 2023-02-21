@@ -1,10 +1,43 @@
-# from recombee_api_client.api_client import RecombeeClient, Region
-# from recombee_api_client.exceptions import APIException
-# from recombee_api_client.api_requests import *
+from recombee_api_client.api_client import RecombeeClient, Region
+from recombee_api_client.exceptions import APIException
+from recombee_api_client.api_requests import *
+
+from pyspark.sql import *
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+mp = 2.323423
+print(f"MP: {mp:.2f}")
+
+# spark = SparkSession.builder.appName("CreateDataFrame").getOrCreate()
 #
-# from pyspark.sql import *
-# from pyspark.sql.functions import *
+# # Define the schema for the DataFrame
+# schema = StructType([
+#     StructField("userId", IntegerType(), True),
+#     StructField("userName", StringType(), True)
+# ])
 #
+# # Define the data for the DataFrame
+# data = [
+#     (1, "User1"),
+#     (2, "User2"),
+#     (3, "User3"),
+#     (4, "User4"),
+#     (5, "User5")
+# ]
+#
+# # Create the DataFrame
+# df = spark.createDataFrame(data, schema)
+# df.show()
+# listdf = df.collect()
+# for row in listdf:
+#     print(f'the user id {row["userId"]} doesnt exist')
+
+# df1 = df.orderBy(col("userId")).limit(df.count() // 2)
+# df2 = df.exceptAll(df1)
+# df1.show()
+# df2.show()
+
 # client = RecombeeClient('vegacorp-dev', \
 #         '4wWrZd2X7N6svVNBoFZ1E8LWKifKUVSWJUUD213FNjr9iu4X3HTDEpJSEnOAmLAu', \
 #          region=Region.AP_SE)
@@ -58,23 +91,23 @@
 # )
 # print(returnQuery)
 import json
-with open('Waka/debugRecom.txt','r+') as f:
-    totalPrecision = 0
-    totalAveragePrecision = 0
-    count = 0
-    for i in f.readlines():
-        splitList = i.split(",")
-
-        #'averagePrecision'", " 1.0, 'precision'", ' 4}\n'
-        precision = int(splitList[-1].split(":")[1][1])
-        averagePrecision = float(splitList[-2].split(":")[1])
-        totalPrecision += precision
-        totalAveragePrecision += averagePrecision
-        count += 1
-
-    print(count)
-    MAP = totalAveragePrecision / count * 100
-    MP = totalPrecision / count * 100
-    print('MAP: ', MAP)
-    print('MP', MP)
+# with open('Waka/debugRecom.txt','r+') as f:
+#     totalPrecision = 0
+#     totalAveragePrecision = 0
+#     count = 0
+#     for i in f.readlines():
+#         splitList = i.split(",")
+#
+#         #'averagePrecision'", " 1.0, 'precision'", ' 4}\n'
+#         precision = int(splitList[-1].split(":")[1][1])
+#         averagePrecision = float(splitList[-2].split(":")[1])
+#         totalPrecision += precision
+#         totalAveragePrecision += averagePrecision
+#         count += 1
+#
+#     print(count)
+#     MAP = totalAveragePrecision / count * 100
+#     MP = totalPrecision / count * 100
+#     print('MAP: ', MAP)
+#     print('MP', MP)
 

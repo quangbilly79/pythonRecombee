@@ -15,24 +15,30 @@ spark = SparkSession.builder.getOrCreate()
 
 sqlUserRead = """
 select user_id, collect_set(cast(content_id as string)) as content_id from waka.waka_pd_fact_reader
-where  data_date_key > 20220631 and (user_id < 2897333 or user_id > 2900000) and user_id <> 1796831 and user_id <> 1797458
+where  data_date_key > 20220631 and data_date_key <= 20220731
 group by user_id
 order by user_id
 """
 
-scenario = "Items-to-User1" #Items-to-User
-logic = "recombee:personal" #"recombee:default"
+scenario = "Items-to-User" #Items-to-User
+logic = "recombee:default" #"recombee:default"
 dfAllUserid = spark.sql(sqlUserRead).select(col("user_id")).orderBy(col("user_id"))
 listAllUserId = dfAllUserid.collect()
 dictUserRecommend = {} # Dict chua' userId va` list item id cua? cac' item dc recommend cho user do'
+listUserIdNotExist = [] # List chua userId k ton` tai. trong Train Set
 print("step 1")
 for row in listAllUserId:
 
     numOfReturnRecom = 4
-    returnQuery = client.send(
-        RecommendItemsToUser(scenario=scenario, user_id=str(row["user_id"]),
-                             count=4, logic=logic)
-        )
+    try:
+        returnQuery = client.send(
+            RecommendItemsToUser(scenario=scenario, user_id=str(row["user_id"]),
+                                 count=4, logic=logic)
+            )
+    except:
+        listUserIdNotExist.append(str(row["user_id"]))
+        print(f'the user id {row["user_id"]} doesnt exist')
+        continue
     #{'recommId': 'c0f4f5d50ba6cda16e25a57cd3104401', 'recomms': [{'id': '21058'}, {'id': '38045'}, {'id': '37976'},
     listItemId = returnQuery["recomms"]
     #[{'id': '21058'}, {'id': '38045'}, {'id': '37976'}, {'id': '37736'}, {'id': '37535'}]
@@ -86,6 +92,9 @@ dictResult = {} # Dict tong? hop. kq de? debug
 totalAveragePrecision = 0 # Total AveragePrecision at 4 of all users
 totalPrecision = 0 # Total Precision at 4 of all users
 for userid in dictUserRead.keys():
+    if userid in listUserIdNotExist:
+        print(f'the user id {row["user_id"]} doesnt exist (calculate MAP part)')
+        continue
     averagePrecision = averagePrecisionAtK(dictUserRecommend[userid], dictUserRead[userid])
     totalAveragePrecision += averagePrecision
 
@@ -103,19 +112,25 @@ with open('debugRecom.txt', 'w+') as f:
         f.write('%s:%s\n' % (key, value))
 
 # Mean Average Precision and Mean Precision
-MAP = totalAveragePrecision / len(dictUserRead) * 100
-MP = totalPrecision / len(dictUserRead) * 100
+MAP = totalAveragePrecision / (len(dictUserRead)-len(listUserIdNotExist)) * 100
+MP = totalPrecision / (len(dictUserRead)-len(listUserIdNotExist)) * 100
 with open('resultRecom.txt', 'w+') as f:
     f.write(str(scenario) + ' - ' + str(logic))
     f.write("Mean Average Precision: "+ str(MAP)+"%" + "\n" + "Mean Precision: "+ str(MP)+"%")
 
 spark.stop()
-#"recombee:default"
-# Mean Average Precision: 8.368019979508215%
-# Mean Precision: 39.82453893442623%
+#"recombee:default" 1 Month
+# Mean Average Precision: 8.37%
+# Mean Precision: 9.95%
+# Scenario: Items to User, ur - default
+#"recombee:personal"
+
+#"recombee:default" 6 Month
+# Mean Average Precision: 8.38
+# Mean Precision: 9.95
 # Scenario: Items to User, ur - default
 
-#"recombee:personal"
+
 
 # UserARow x R
 # 0 1 2 3 4

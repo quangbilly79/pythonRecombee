@@ -12,9 +12,9 @@ spark-submit \
      --driver-memory 5g \
      --executor-memory 2g \
      --driver-cores 6 \
-     importItemPropertiesRecom.py > outputRecom.txt 1>&1;
+     importNormalEventRecomBatchRead.py > outputRecom.txt 1>&1;
 
-importNormalEventRecom  importItemPropertiesRecom evaluateRecom
+importNormalEventRecomBatchRead importNormalEventRecomBatchOther importItemPropertiesRecomBatch evaluateRecom
 > outputRecom.txt 1>&1
 
 So in spark you have two different components.
